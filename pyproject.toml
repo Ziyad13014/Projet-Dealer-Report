@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling>=1.18.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dealer-report"
+version = "0.1.0"
+description = "Daily dealer anomaly report CLI (MySQL -> CSV/HTML -> GCS -> Teams)"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{name = "Your Team"}]
+license = {text = "MIT"}
+dependencies = [
+  "click",
+  "python-dotenv",
+  "dependency-injector",
+  "PyMySQL",
+  "google-cloud-storage",
+  "requests",
+  "beautifulsoup4"
+]
+
+[project.scripts]
+dealer-report = "cli.cli:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["cli"]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=7.0",
+  "pytest-mock>=3.10",
+]

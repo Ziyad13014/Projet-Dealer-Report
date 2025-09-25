@@ -1,0 +1,132 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@2.1.1
+
+executors:
+  py:
+    docker:
+      - image: cimg/python:3.12
+    environment:
+      PIP_CACHE_DIR: ~/.cache/pip
+
+jobs:
+  test:
+    executor: py
+    steps:
+      - checkout
+      - run:
+          name: Check Python version
+          command: python -V
+      - restore_cache:
+          keys:
+            - pip-cache-v1-{{ checksum "pyproject.toml" }}
+            - pip-cache-v1-
+      - run:
+          name: Install dependencies
+          command: |
+            pip install --upgrade pip
+            pip install .[test]
+      - save_cache:
+          key: pip-cache-v1-{{ checksum "pyproject.toml" }}
+          paths:
+            - ~/.cache/pip
+      - run:
+          name: Run tests
+          command: pytest -v --tb=short
+
+  build_image:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t $DOCKER_IMAGE_NAME:$CIRCLE_SHA1 -f .docker/Dockerfile .
+            docker tag $DOCKER_IMAGE_NAME:$CIRCLE_SHA1 $DOCKER_IMAGE_NAME:latest
+
+  push_image:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Login to Docker registry
+          command: echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+      - run:
+          name: Pull and push images
+          command: |
+            docker pull $DOCKER_IMAGE_NAME:$CIRCLE_SHA1
+            docker tag $DOCKER_IMAGE_NAME:$CIRCLE_SHA1 $DOCKER_IMAGE_NAME:latest
+            docker push $DOCKER_IMAGE_NAME:$CIRCLE_SHA1
+            docker push $DOCKER_IMAGE_NAME:latest
+
+  daily_report:
+    executor: py
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - pip-cache-v1-{{ checksum "pyproject.toml" }}
+            - pip-cache-v1-
+      - run:
+          name: Install application
+          command: |
+            pip install --upgrade pip
+            pip install .
+      - run:
+          name: Generate and publish daily report
+          command: |
+            # Generate HTML report for today
+            dealer-report generate_dealer_report --date-from $(date +%F) --date-to $(date +%F) --fmt html
+            
+            # Find the generated HTML file
+            LATEST_PATH=${GCS_LATEST_HTML_PATH:-reports/daily/dealer-report-latest.html}
+            HTML_FILE=$(find reports -name "*.html" -type f | head -n1)
+            
+            if [ -z "$HTML_FILE" ]; then
+              echo "No HTML file found in reports directory"
+              exit 1
+            fi
+            
+            echo "Found HTML file: $HTML_FILE"
+            
+            # Upload to GCS and update latest path
+            dealer-report publish_report --path "$HTML_FILE" --dst "$LATEST_PATH"
+            
+            # Send Teams notification
+            HTTPS_URL="https://storage.googleapis.com/$GCS_BUCKET/$LATEST_PATH"
+            dealer-report push_notification_on_teams --url "$HTTPS_URL"
+
+workflows:
+  version: 2
+  
+  build_and_test:
+    jobs:
+      - test
+      - build_image:
+          requires: [test]
+          filters:
+            branches:
+              only: main
+      - push_image:
+          requires: [build_image]
+          filters:
+            branches:
+              only: main
+  
+  # Scheduled daily report at 07:30 UTC (≈ 09:30 CEST)
+  schedule_daily:
+    triggers:
+      - schedule:
+          cron: "30 7 * * *"
+          filters:
+            branches:
+              only: main
+    jobs:
+      - daily_report:
+          context: dealer-report-prod
