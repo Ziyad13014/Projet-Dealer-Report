@@ -1,8 +1,41 @@
 import csv
 import ast
 import json
+import base64
+import os
 from datetime import datetime
 from dotenv import load_dotenv
+
+def get_logo_base64():
+    """Convertit le logo en base64 pour l'intégrer dans le HTML"""
+    logo_path = 'logospdervision.png'
+    try:
+        if os.path.exists(logo_path):
+            with open(logo_path, 'rb') as img_file:
+                encoded = base64.b64encode(img_file.read()).decode('utf-8')
+                return f"data:image/png;base64,{encoded}"
+        else:
+            # Si le logo n'existe pas, retourner une image vide
+            return ""
+    except Exception as e:
+        print(f"⚠️ Impossible de charger le logo: {e}")
+        return ""
+
+def get_gradient_color(value):
+    """Retourne une couleur en dégradé selon le pourcentage.
+    0% = Rouge foncé, 50% = Orange, 90% = Jaune, 95%+ = Vert"""
+    if value >= 95:
+        return "#10b981"  # Vert succès
+    elif value >= 90:
+        return "#fbbf24"  # Jaune (warning)
+    elif value >= 70:
+        return "#fb923c"  # Orange
+    elif value >= 50:
+        return "#f87171"  # Rouge clair
+    elif value >= 25:
+        return "#ef4444"  # Rouge
+    else:
+        return "#dc2626"  # Rouge foncé
 
 def create_stacked_progress_bars(progress_val, progress_status, success_val, success_status):
     """Crée deux barres de progression empilées avec couleurs distinctes.
@@ -10,13 +43,15 @@ def create_stacked_progress_bars(progress_val, progress_status, success_val, suc
     progress_width = min(progress_val, 100)
     success_width = min(success_val, 100)
     
-    # Couleurs fixes pour différencier Progress (bleu) et Success (vert)
+    # Couleur fixe pour Progress (bleu)
     progress_color = "progress-blue"
-    success_color = "success-green"
+    
+    # Couleur dynamique pour Success basée sur le pourcentage
+    success_gradient_color = get_gradient_color(success_val)
     
     # Styles de largeur
     progress_style = f"width: {progress_width}%"
-    success_style = f"width: {success_width}%"
+    success_style = f"width: {success_width}%; background: linear-gradient(90deg, {success_gradient_color} 0%, {success_gradient_color} 100%)"
     
     # Libellés: pourcentage uniquement
     progress_label = f"{progress_val:.1f}%"
@@ -37,7 +72,7 @@ def create_stacked_progress_bars(progress_val, progress_status, success_val, suc
         </div>"""
     else:
         success_bar_content = f"""<div class="progress-bar-small">
-            <div class="progress-fill {success_color}" style="{success_style}">{success_label}</div>
+            <div class="progress-fill" style="{success_style}; color: white;">{success_label}</div>
         </div>"""
     
     return f"""<div class="stacked-bars">
@@ -159,9 +194,23 @@ def generate_new_report():
     
     total_count = len(retailers_data)
     
+    # Trier les données pour prioriser les erreurs
+    # Ordre de priorité: Erreur > Erreur! > Warning > Succès > N/A
+    status_priority = {
+        'Erreur': 0,
+        'Erreur!': 1,
+        'Warning': 2,
+        'Succès': 3,
+        'N/A': 4
+    }
+    retailers_data.sort(key=lambda x: status_priority.get(x['global_status'], 5))
+    
     # Générer le HTML
     current_time = datetime.now().strftime("%d/%m/%Y à %H:%M")
     filename = f"reports/last_day_history_live_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+    
+    # Convertir le logo en base64 pour un fichier HTML autonome
+    logo_base64 = get_logo_base64()
     
     html_content = f"""<!DOCTYPE html>
 <html lang="fr">
@@ -172,7 +221,7 @@ def generate_new_report():
     <style>
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter, sans-serif;
             background: #1a1d29;
             color: #ffffff;
             min-height: 100vh;
@@ -290,8 +339,8 @@ def generate_new_report():
             gap: 12px;
         }}
         .logo {{
-            width: 32px;
-            height: 24px;
+            width: 48px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -502,6 +551,85 @@ def generate_new_report():
         .history-warning {{ background: #f59e0b; }}
         .history-error {{ background: #ef4444; }}
         .history-na {{ background: #6b7280; }}
+        
+        /* Pro visual refresh: palette, KPIs, sticky header, segmented filters, badges */
+        :root {{
+            --c-primary:#2563eb; --c-success:#10b981; --c-warning:#f59e0b; --c-error:#ef4444; --c-error-crit:#991b1b;
+            --c-bg:#0f172a; --c-surface:#111827; --c-surface-2:#1f2937; --c-border:#334155; --c-text:#e5e7eb; --c-muted:#94a3b8;
+            --radius:10px; --radius-badge:999px; --shadow-1:0 2px 6px rgba(0,0,0,.2); --shadow-2:0 8px 24px rgba(0,0,0,.35);
+        }}
+        body {{ background: var(--c-bg); color: var(--c-text); }}
+        .container {{ background: var(--c-surface-2); box-shadow: var(--shadow-1); }}
+        .header {{ background: #0b1220; border:1px solid var(--c-border); height:auto; padding: 12px 16px; }}
+        .header-time {{ color: var(--c-muted); font-size: 12px; }}
+        .table-container {{ background: var(--c-surface-2); border:1px solid var(--c-border); }}
+        th {{ position: sticky; top: 0; z-index: 2; background: #111827; border-bottom: 1px solid var(--c-border); }}
+        tr:hover {{ background: rgba(148,163,184,.08); }}
+        /* KPI tiles */
+        .kpis {{ display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; padding: 12px 0 4px; }}
+        .kpi-card {{ background: #0b1220; border:1px solid var(--c-border); border-radius: var(--radius); padding: 10px 12px; box-shadow: var(--shadow-1); }}
+        .kpi-card .kpi-label {{ color: var(--c-muted); font-size: 12px; font-weight: 600; }}
+        .kpi-card .kpi-value {{ font-size: 20px; font-weight: 800; margin-top: 2px; }}
+        .kpi-card.success .kpi-value {{ color: #34d399; }}
+        .kpi-card.warning .kpi-value {{ color: #fbbf24; }}
+        .kpi-card.error .kpi-value {{ color: #f87171; }}
+        /* Segmented filters */
+        .filters {{ background: transparent; border-bottom: none; padding: 12px 0 18px; }}
+        .filter-buttons {{ border:1px solid var(--c-border); border-radius: 999px; padding: 6px; background: #0b1220; box-shadow: var(--shadow-1); }}
+        .filter-btn {{ border-radius: 999px; padding: 8px 14px; box-shadow: none; border:1px solid transparent; background: transparent; color: var(--c-text); }}
+        .filter-btn.active {{ background: #1e293b; border-color: var(--c-border); }}
+        .btn-success.active {{ background: rgba(16,185,129,.15); color: #34d399; border-color: rgba(16,185,129,.35); }}
+        .btn-warning.active {{ background: rgba(245,158,11,.15); color: #fbbf24; border-color: rgba(245,158,11,.35); }}
+        .btn-error.active, .btn-error-critical.active {{ background: rgba(239,68,68,.15); color: #fca5a5; border-color: rgba(239,68,68,.35); }}
+        /* Status badges */
+        .status {{ border:1px solid rgba(255,255,255,.08); letter-spacing: .3px; }}
+        .status.success {{ background: rgba(16,185,129,.12); color:#34d399; border-color: rgba(16,185,129,.35); }}
+        .status.warning {{ background: rgba(245,158,11,.12); color:#fbbf24; border-color: rgba(245,158,11,.35); }}
+        .status.error {{ background: rgba(239,68,68,.12); color:#fca5a5; border-color: rgba(239,68,68,.35); }}
+        .status.error-critical {{ background: rgba(153,27,27,.35); color:#fecaca; border-color: rgba(252,165,165,.35); }}
+        /* History chips */
+        .history-day {{ border:1px solid rgba(255,255,255,.06); border-radius: 6px; }}
+        /* Footer */
+        .footer {{ margin-top: 14px; padding: 10px 14px; color: var(--c-muted); border-top: 1px solid var(--c-border); font-size: 12px; }}
+        /* Visual alignment with spider-vision.data-solutions.com (CSS-only overrides) */
+        body {{ background: radial-gradient(1200px 600px at -10% -10%, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.0) 60%), #1e2533; }}
+        .container {{ background: #0f1720; border: 1px solid #2b3446; box-shadow: 0 8px 24px rgba(0,0,0,.35); }}
+        .header {{ background: linear-gradient(180deg,#1a2231 0%, #151c28 100%); border: 1px solid #2b3446; border-radius: 10px; }}
+        .header-time {{ color:#9fb0c7; font-weight:600; }}
+        .filters {{ padding-top: 10px; }}
+        .filter-buttons {{ background:#0e1622; border-color:#2b3446; }}
+        .filter-btn {{ color:#c9d3e1; font-weight:600; }}
+        .filter-btn:hover {{ background:#162131; border-color:#3a465c; }}
+        .filter-btn.active {{ background:#192335; border-color:#3b4a63; box-shadow: inset 0 0 0 1px rgba(255,255,255,.03); }}
+        table {{ background:#0f1720; }}
+        th {{ background:#131a27; color:#b9c6d6; border-bottom:1px solid #2b3446; }}
+        td {{ border-bottom:1px solid #1f2a3b; color:#e6eef8; }}
+        tr:hover {{ background: rgba(59,73,99,.22); }}
+        /* Column color bands similar to screenshot */
+        tr.success td:not(:first-child) {{ background-color: rgba(16,185,129,.10); }}
+        tr.warning td:not(:first-child) {{ background-color: rgba(245,158,11,.10); }}
+        tr.error td:not(:first-child) {{ background-color: rgba(239,68,68,.10); }}
+        tr.error_critical td:not(:first-child) {{ background-color: rgba(153,27,27,.18); }}
+        /* Progress bars */
+        .progress-bar-small {{ background:#263248; height:22px; border-radius: 6px; box-shadow: inset 0 2px 6px rgba(0,0,0,.45); }}
+        .progress-fill.progress-blue {{ background: linear-gradient(90deg,#6ea8fe 0%, #4a6ff3 100%); }}
+        .progress-fill.success-green {{ background: linear-gradient(90deg,#34d399 0%, #10b981 100%); }}
+        .progress-fill, .progress-fill-zero {{ font-size:12px; }}
+        /* Status badges like small rounded pills */
+        .status {{ border-radius: 8px; padding: 6px 10px; font-weight:700; letter-spacing:.2px; }}
+        .status.success {{ background:#0b3b2b; color:#82f3c2; border-color:#1e8a64; }}
+        .status.warning {{ background:#3a2b06; color:#ffd36e; border-color:#a57913; }}
+        .status.error {{ background:#3b1113; color:#ff9aa2; border-color:#b23a41; }}
+        .status.error-critical {{ background:#3a0d0d; color:#ffd1d1; border-color:#a33; }}
+        /* History chips: vivid with white text */
+        .history-day {{ min-width: 44px; height: 22px; line-height: 22px; font-weight: 700; font-size: 11px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.25); }}
+        .history-success {{ background:#16a34a; }}
+        .history-warning {{ background:#d97706; }}
+        .history-error {{ background:#b91c1c; }}
+        .history-na {{ background:#334155; }}
+        /* Mini details card */
+        .mini-details-row td {{ background:#0b1220 !important; }}
+        .mini-card {{ padding: 10px 10px; border:1px solid #2b3446; border-radius:10px; background:#0f1720; }}
     </style>
 </head>
 <body>
@@ -509,11 +637,12 @@ def generate_new_report():
         <div class="header">
             <div class="header-left">
                 <div class="logo">
-                    <img src="logospdervision.png" alt="SpiderVision Logo">
+                    <img src="{logo_base64}" alt="SpiderVision Logo">
                 </div>
             </div>
             <div class="header-time">{current_time}</div>
         </div>
+        
         
         <div class="filters">
             <div class="filter-buttons">
@@ -583,9 +712,9 @@ def generate_new_report():
                 </tbody>
             </table>
         </div>
+        <div class="footer">Rapport SpiderVision Live • Généré le: {current_time} • Source: spider_vision_overview_current.csv</div>
         </div>
-    
-    
+
         <script>
         function filterTable(filter, el) {
             const rows = document.querySelectorAll('#dataTable tbody tr');
