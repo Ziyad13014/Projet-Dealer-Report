@@ -44,6 +44,7 @@ Thumbs.db
 
 # Project-specific: generated reports and data exports
 reports/*.html
+!reports/last_day_history_live_report.html
 reports/*.csv
 reports/*.json
 reports/*.xlsx
