@@ -812,6 +812,14 @@ def generate_new_report():
         f.write(html_content)
     
     print(f"✅ Nouveau rapport généré: {filename}")
+    
+    # Mettre à jour automatiquement index.html avec le lien du nouveau rapport
+    try:
+        from update_index_link import auto_update_index
+        auto_update_index()
+    except Exception as e:
+        print(f"⚠️ Impossible de mettre à jour index.html: {e}")
+    
     return filename
 
 if __name__ == "__main__":
