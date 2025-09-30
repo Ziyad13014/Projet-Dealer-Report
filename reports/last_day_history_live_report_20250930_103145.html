@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport SpiderVision Live - 30/09/2025 à 10:31</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter, sans-serif;
+            background: #1a1d29;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        .filters {
+            padding: 20px 30px;
+            background: #2d3748;
+            border-bottom: 1px solid #4a5568;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .filter-btn:hover, .filter-btn.active {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .btn-all { background: #6c757d; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-error { background: #dc3545; color: white; }
+        .btn-error-critical { background: #8b0000; color: white; }
+        tr.success td:not(:first-child) {
+            background-color: rgba(40, 167, 69, 0.2);
+        }
+        tr.warning td:not(:first-child) {
+            background-color: rgba(255, 193, 7, 0.2);
+        }
+        tr.error td:not(:first-child) {
+            background-color: rgba(220, 53, 69, 0.2);
+        }
+        tr.error_critical td:not(:first-child) {
+            background-color: rgba(139, 0, 0, 0.3);
+        }
+        /* Detail button */
+        .detail-btn {
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid #4a5568;
+            background: #374151;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+        .detail-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.25); }
+        
+        /* Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: #111827; color: #fff; width: min(720px, 92vw); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.5); border: 1px solid #374151; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; border-bottom: 1px solid #374151; }
+        .modal-title { font-size: 18px; font-weight: 700; }
+        .modal-close { background: transparent; border: none; color: #9ca3af; font-size: 22px; cursor: pointer; }
+        .modal-body { padding: 16px 18px; line-height: 1.6; }
+        .kv { display: grid; grid-template-columns: 200px 1fr; gap: 8px 16px; margin-bottom: 12px; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-weight: 700; font-size: 12px; }
+        .badge.success { background: rgba(40,167,69,.15); color: #4ade80; border: 1px solid rgba(74,222,128,.35); }
+        .badge.warning { background: rgba(255,193,7,.15); color: #fde047; border: 1px solid rgba(253,224,71,.35); }
+        .badge.error { background: rgba(220,53,69,.15); color: #fca5a5; border: 1px solid rgba(252,165,165,.35); }
+        .badge.error-critical { background: rgba(139,0,0,.25); color: #fecaca; border: 1px solid rgba(254,202,202,.35); }
+        .history { margin-top: 10px; }
+        .history h4 { margin-bottom: 6px; font-size: 14px; color: #9ca3af; }
+        .history ul { list-style: disc; margin-left: 20px; color: #e5e7eb; }
+        .detail-intro { background: #1f2937; padding: 10px; border-radius: 6px; margin-bottom: 12px; color: #e5e7eb; }
+        .detail-intro .intro-list { margin-top: 6px; margin-left: 18px; list-style: disc; }
+        .legend { margin: 8px 0 4px 0; color: #9ca3af; }
+        td:first-child {
+            border-left: 2px solid #000;
+            border-right: 2px solid #000;
+            background-color: #1f2937 !important;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        tr:first-child td:first-child {
+            border-top: 2px solid #000;
+        }
+        tr:last-child td:first-child {
+            border-bottom: 2px solid #000;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1f2937;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: #374151;
+            color: white;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            height: 40px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo {
+            width: 48px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .header-time {
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .table-container {
+            background: #1f2937;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+        th {
+            background: #374151;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #d1d5db;
+            border-bottom: 1px solid #4b5563;
+        }
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #374151;
+            font-size: 14px;
+        }
+        /* Column widths: make 'Enseigne' smaller, others larger */
+        th:nth-child(1), td:nth-child(1) { width: 18%; }
+        th:nth-child(2), td:nth-child(2) { width: 62%; }
+        th:nth-child(3), td:nth-child(3) { width: 20%; }
+        tr:hover {
+            background: rgba(55, 65, 81, 0.5);
+        }
+        .stacked-bars {
+            width: 100%;
+        }
+        .progress-bar-small {
+            width: 100%;
+            height: 20px;
+            background: #4b5563;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            margin: 3px 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .progress-fill {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            min-width: 40px;
+        }
+        .progress-fill-zero {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding-left: 8px;
+            color: #d1d5db;
+            font-size: 12px;
+            font-weight: 600;
+            background: transparent;
+        }
+        .progress-fill.progress-blue {
+            background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+            color: white;
+        }
+        .progress-fill.success-green {
+            background: linear-gradient(90deg, #28a745 0%, #1e7e34 100%);
+            color: white;
+        }
+        .status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .status.error-critical {
+            background: #8b0000;
+            color: white;
+        }
+        /* Mini details (inline mini page) */
+        .mini-link {
+            margin-left: 8px;
+            font-size: 12px;
+            color: #60a5fa;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        /* Retailer name truncated to keep link visible */
+        .retailer-name {
+            display: inline-block;
+            max-width: 75%;
+            vertical-align: middle;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mini-details-row td {
+            background: #111827 !important;
+        }
+        .mini-card {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            padding: 10px 6px;
+        }
+        .info-icon {
+            font-size: 0.8em;
+            margin-left: 5px;
+            cursor: help;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        .info-icon:hover {
+            opacity: 1;
+        }
+        .hidden { display: none !important; }
+        .detail-btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .detail-btn:hover {
+            background: #3730a3;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #1f2937;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            color: white;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: white;
+        }
+        .detail-section {
+            margin: 15px 0;
+            padding: 10px;
+            background: #374151;
+            border-radius: 6px;
+        }
+        .history-day {
+            display: inline-block;
+            width: 30px;
+            height: 20px;
+            margin: 2px;
+            border-radius: 3px;
+            text-align: center;
+            font-size: 10px;
+            line-height: 20px;
+            color: white;
+        }
+        .history-success { background: #10b981; }
+        .history-warning { background: #f59e0b; }
+        .history-error { background: #ef4444; }
+        .history-na { background: #6b7280; }
+        
+        /* Pro visual refresh: palette, KPIs, sticky header, segmented filters, badges */
+        :root {
+            --c-primary:#2563eb; --c-success:#10b981; --c-warning:#f59e0b; --c-error:#ef4444; --c-error-crit:#991b1b;
+            --c-bg:#0f172a; --c-surface:#111827; --c-surface-2:#1f2937; --c-border:#334155; --c-text:#e5e7eb; --c-muted:#94a3b8;
+            --radius:10px; --radius-badge:999px; --shadow-1:0 2px 6px rgba(0,0,0,.2); --shadow-2:0 8px 24px rgba(0,0,0,.35);
+        }
+        body { background: var(--c-bg); color: var(--c-text); }
+        .container { background: var(--c-surface-2); box-shadow: var(--shadow-1); }
+        .header { background: #0b1220; border:1px solid var(--c-border); height:auto; padding: 12px 16px; }
+        .header-time { color: var(--c-muted); font-size: 12px; }
+        .table-container { background: var(--c-surface-2); border:1px solid var(--c-border); }
+        th { position: sticky; top: 0; z-index: 2; background: #111827; border-bottom: 1px solid var(--c-border); }
+        tr:hover { background: rgba(148,163,184,.08); }
+        /* KPI tiles */
+        .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; padding: 12px 0 4px; }
+        .kpi-card { background: #0b1220; border:1px solid var(--c-border); border-radius: var(--radius); padding: 10px 12px; box-shadow: var(--shadow-1); }
+        .kpi-card .kpi-label { color: var(--c-muted); font-size: 12px; font-weight: 600; }
+        .kpi-card .kpi-value { font-size: 20px; font-weight: 800; margin-top: 2px; }
+        .kpi-card.success .kpi-value { color: #34d399; }
+        .kpi-card.warning .kpi-value { color: #fbbf24; }
+        .kpi-card.error .kpi-value { color: #f87171; }
+        /* Segmented filters */
+        .filters { background: transparent; border-bottom: none; padding: 12px 0 18px; }
+        .filter-buttons { border:1px solid var(--c-border); border-radius: 999px; padding: 6px; background: #0b1220; box-shadow: var(--shadow-1); }
+        .filter-btn { border-radius: 999px; padding: 8px 14px; box-shadow: none; border:1px solid transparent; background: transparent; color: var(--c-text); }
+        .filter-btn.active { background: #1e293b; border-color: var(--c-border); }
+        .btn-success.active { background: rgba(16,185,129,.15); color: #34d399; border-color: rgba(16,185,129,.35); }
+        .btn-warning.active { background: rgba(245,158,11,.15); color: #fbbf24; border-color: rgba(245,158,11,.35); }
+        .btn-error.active, .btn-error-critical.active { background: rgba(239,68,68,.15); color: #fca5a5; border-color: rgba(239,68,68,.35); }
+        /* Status badges */
+        .status { border:1px solid rgba(255,255,255,.08); letter-spacing: .3px; }
+        .status.success { background: rgba(16,185,129,.12); color:#34d399; border-color: rgba(16,185,129,.35); }
+        .status.warning { background: rgba(245,158,11,.12); color:#fbbf24; border-color: rgba(245,158,11,.35); }
+        .status.error { background: rgba(239,68,68,.12); color:#fca5a5; border-color: rgba(239,68,68,.35); }
+        .status.error-critical { background: rgba(153,27,27,.35); color:#fecaca; border-color: rgba(252,165,165,.35); }
+        /* History chips */
+        .history-day { border:1px solid rgba(255,255,255,.06); border-radius: 6px; }
+        /* Footer */
+        .footer { margin-top: 14px; padding: 10px 14px; color: var(--c-muted); border-top: 1px solid var(--c-border); font-size: 12px; }
+        /* Visual alignment with spider-vision.data-solutions.com (CSS-only overrides) */
+        body { background: radial-gradient(1200px 600px at -10% -10%, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.0) 60%), #1e2533; }
+        .container { background: #0f1720; border: 1px solid #2b3446; box-shadow: 0 8px 24px rgba(0,0,0,.35); }
+        .header { background: linear-gradient(180deg,#1a2231 0%, #151c28 100%); border: 1px solid #2b3446; border-radius: 10px; }
+        .header-time { color:#9fb0c7; font-weight:600; }
+        .filters { padding-top: 10px; }
+        .filter-buttons { background:#0e1622; border-color:#2b3446; }
+        .filter-btn { color:#c9d3e1; font-weight:600; }
+        .filter-btn:hover { background:#162131; border-color:#3a465c; }
+        .filter-btn.active { background:#192335; border-color:#3b4a63; box-shadow: inset 0 0 0 1px rgba(255,255,255,.03); }
+        table { background:#0f1720; }
+        th { background:#131a27; color:#b9c6d6; border-bottom:1px solid #2b3446; }
+        td { border-bottom:1px solid #1f2a3b; color:#e6eef8; }
+        tr:hover { background: rgba(59,73,99,.22); }
+        /* Column color bands similar to screenshot */
+        tr.success td:not(:first-child) { background-color: rgba(16,185,129,.10); }
+        tr.warning td:not(:first-child) { background-color: rgba(245,158,11,.10); }
+        tr.error td:not(:first-child) { background-color: rgba(239,68,68,.10); }
+        tr.error_critical td:not(:first-child) { background-color: rgba(153,27,27,.18); }
+        /* Progress bars */
+        .progress-bar-small { background:#263248; height:22px; border-radius: 6px; box-shadow: inset 0 2px 6px rgba(0,0,0,.45); }
+        .progress-fill.progress-blue { background: linear-gradient(90deg,#6ea8fe 0%, #4a6ff3 100%); }
+        .progress-fill.success-green { background: linear-gradient(90deg,#34d399 0%, #10b981 100%); }
+        .progress-fill, .progress-fill-zero { font-size:12px; }
+        /* Status badges like small rounded pills */
+        .status { border-radius: 8px; padding: 6px 10px; font-weight:700; letter-spacing:.2px; }
+        .status.success { background:#0b3b2b; color:#82f3c2; border-color:#1e8a64; }
+        .status.warning { background:#3a2b06; color:#ffd36e; border-color:#a57913; }
+        .status.error { background:#3b1113; color:#ff9aa2; border-color:#b23a41; }
+        .status.error-critical { background:#3a0d0d; color:#ffd1d1; border-color:#a33; }
+        /* History chips: vivid with white text */
+        .history-day { min-width: 44px; height: 22px; line-height: 22px; font-weight: 700; font-size: 11px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08), 0 1px 2px rgba(0,0,0,.25); }
+        .history-success { background:#16a34a; }
+        .history-warning { background:#d97706; }
+        .history-error { background:#b91c1c; }
+        .history-na { background:#334155; }
+        /* Mini details card */
+        .mini-details-row td { background:#0b1220 !important; }
+        .mini-card { padding: 10px 10px; border:1px solid #2b3446; border-radius:10px; background:#0f1720; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <img src="../logospdervision.png" alt="SpiderVision Logo">
+                </div>
+            </div>
+            <div class="header-time">30/09/2025 à 10:31</div>
+        </div>
+        
+        
+        <div class="filters">
+            <div class="filter-buttons">
+                <button class="filter-btn btn-all active" onclick="filterTable('all', this)">Tous (36)</button>
+                <button class="filter-btn btn-success" onclick="filterTable('success', this)">Succès (21)</button>
+                <button class="filter-btn btn-warning" onclick="filterTable('warning', this)">Warning (1)</button>
+                <button class="filter-btn btn-error" onclick="filterTable('error', this)">Erreur (6)</button>
+                <button class="filter-btn btn-error-critical" onclick="filterTable('error-critical', this)">Erreur! (8)</button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Enseigne</th>
+                        <th>
+                            Progress & Success (%)
+                            <span class="info-icon" title="Bleu: % de magasins crawlés | Vert: % de magasins avec contenu">ℹ️</span>
+                        </th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="error" data-status="Erreur" data-history='[94.74, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Stokomani</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 31.0%">31.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 29.0%; background: linear-gradient(90deg, #ef4444 0%, #ef4444 100%); color: white;">29.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error">Erreur</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">31.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status error">29.0% (Erreur)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error" data-status="Erreur" data-history='[97.1, 99.3, 97.71, 98.44, 97.9, 98.61]'>
+                        <td><strong class="retailer-name">Monoprix plus</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 48.0%">48.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 46.0%; background: linear-gradient(90deg, #ef4444 0%, #ef4444 100%); color: white;">46.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error">Erreur</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">48.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status error">46.0% (Erreur)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error" data-status="Erreur" data-history='[99.77, 99.7, 98.64, 98.93, 99.8, 99.31]'>
+                        <td><strong class="retailer-name">Carrefour</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 13.0%">13.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 12.0%; background: linear-gradient(90deg, #dc2626 0%, #dc2626 100%); color: white;">12.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error">Erreur</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status error">13.0% (Erreur)</span></div>
+                                <div><strong>Success:</strong> <span class="status error">12.0% (Erreur)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error" data-status="Erreur" data-history='[100, 99.54, 72.1, 70.64, 100, 100]'>
+                        <td><strong class="retailer-name">Intermarché</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 11.0%">11.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 10.0%; background: linear-gradient(90deg, #dc2626 0%, #dc2626 100%); color: white;">10.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error">Erreur</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status error">11.0% (Erreur)</span></div>
+                                <div><strong>Success:</strong> <span class="status error">10.0% (Erreur)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error" data-status="Erreur" data-history='[100, 98.98, 99.69, 100, 99.67, 100]'>
+                        <td><strong class="retailer-name">Auchan</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 34.0%">34.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 34.0%; background: linear-gradient(90deg, #ef4444 0%, #ef4444 100%); color: white;">34.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error">Erreur</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">34.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status error">34.0% (Erreur)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error" data-status="Erreur" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Satoriz</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 36.0%">36.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 36.0%; background: linear-gradient(90deg, #ef4444 0%, #ef4444 100%); color: white;">36.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error">Erreur</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">36.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status error">36.0% (Erreur)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error_critical" data-status="Erreur!" data-history='[0, 0, 0, 0, 0, 0]'>
+                        <td><strong class="retailer-name">Monoprix</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error-critical">Erreur!</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                                <div><strong>Success:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error_critical" data-status="Erreur!" data-history='[0, 0, 0, 0, 0, 0]'>
+                        <td><strong class="retailer-name">Cora</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error-critical">Erreur!</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                                <div><strong>Success:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error_critical" data-status="Erreur!" data-history='[0, 0, 0, 0, 0, 0]'>
+                        <td><strong class="retailer-name">Casino</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error-critical">Erreur!</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                                <div><strong>Success:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error_critical" data-status="Erreur!" data-history='[0, 100, 100, 100, 100, 50]'>
+                        <td><strong class="retailer-name">Naturalia</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error-critical">Erreur!</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                                <div><strong>Success:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error_critical" data-status="Erreur!" data-history='[0, 0, 0, 0, 0, 0]'>
+                        <td><strong class="retailer-name">Franprix</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 97.0%">97.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error-critical">Erreur!</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">97.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error_critical" data-status="Erreur!" data-history='[0, 0, 0, 0, 0, 0]'>
+                        <td><strong class="retailer-name">Autre enseigne</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error-critical">Erreur!</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                                <div><strong>Success:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error_critical" data-status="Erreur!" data-history='[0, 0, 0, 0, 0, 0]'>
+                        <td><strong class="retailer-name">Auchan Bi1</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error-critical">Erreur!</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                                <div><strong>Success:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="error_critical" data-status="Erreur!" data-history='[0, 0, 0, 0, 0, 100]'>
+                        <td><strong class="retailer-name">Bmstores</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill-zero">0.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status error-critical">Erreur!</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status error-critical">0.0% (Erreur!)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="warning" data-status="Warning" data-history='[98.95, 100, 59.62, 63.46, 97.12, 100]'>
+                        <td><strong class="retailer-name">CollectAndGo</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100%">112.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 90.0%; background: linear-gradient(90deg, #fbbf24 0%, #fbbf24 100%); color: white;">90.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status warning">Warning</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">112.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status warning">90.0% (Warning)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[96.27, 96.27, 80.98, 80.37, 96.27, 96.32]'>
+                        <td><strong class="retailer-name">Auchan Livraison</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 99.0%">99.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 95.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">95.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">99.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">95.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[97.33, 97.33, 97.33, 97.33, 97.33, 100]'>
+                        <td><strong class="retailer-name">Bi1 Drive</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 97.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">97.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">97.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[98.44, 98.44, 98.44, 98.44, 98.44, 98.44]'>
+                        <td><strong class="retailer-name">La Vie Claire</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 98.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">98.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">98.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[98.65, 97.97, 95.95, 98.65, 98.65, 97.97]'>
+                        <td><strong class="retailer-name">Deliveroo</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 98.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">98.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">98.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[99.69, 99.69, 99.69, 99.38, 99.38, 99.69]'>
+                        <td><strong class="retailer-name">Biocoop</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 99.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">99.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">99.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[99.77, 99.77, 99.54, 99.77, 99.77, 100]'>
+                        <td><strong class="retailer-name">Casino proximités</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100%">101.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 99.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">99.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">101.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">99.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Houra.fr</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 0]'>
+                        <td><strong class="retailer-name">ChronoDrive</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Système U</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100%">102.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 99.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">99.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">102.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">99.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 99.35, 97.18, 96.85, 99.35, 99.67]'>
+                        <td><strong class="retailer-name">Leclerc</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 95.65, 100, 100, 100]'>
+                        <td><strong class="retailer-name">MatchDrive</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">G20 Minute</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Amazon</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Greenweez</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">L'Oreal Paris</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Action</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Lafourche</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Uber Eats</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">La Belle Vie</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Picnic</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="success" data-status="Succès" data-history='[100, 100, 100, 100, 100, 100]'>
+                        <td><strong class="retailer-name">Eau-vive</strong> <a class="mini-link" href="javascript:void(0)" onclick="toggleMini(this)">Voir statuts</a></td>
+                        <td><div class="stacked-bars">
+        <div class="progress-bar-small">
+            <div class="progress-fill progress-blue" style="width: 100.0%">100.0%</div>
+        </div>
+        <div class="progress-bar-small">
+            <div class="progress-fill" style="width: 100.0%; background: linear-gradient(90deg, #10b981 0%, #10b981 100%); color: white;">100.0%</div>
+        </div>
+    </div></td>
+                        <td><span class="status success">Succès</span></td>
+                    </tr>
+                    <tr class="mini-details-row hidden">
+                        <td colspan="3">
+                            <div class="mini-card">
+                                <div><strong>Historique (Success 6j):</strong> <span class="history-line"></span></div>
+                                <div><strong>Progress:</strong> <span class="status success">100.0% (Succès)</span></div>
+                                <div><strong>Success:</strong> <span class="status success">100.0% (Succès)</span></div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="footer">Rapport SpiderVision Live • Généré le: {current_time} • Source: spider_vision_overview_current.csv</div>
+        </div>
+
+        <script>
+        function filterTable(filter, el) {
+            const rows = document.querySelectorAll('#dataTable tbody tr');
+            const buttons = document.querySelectorAll('.filter-btn');
+            
+            // Reset button states
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Set active button
+            if (el) { el.classList.add('active'); }
+            
+            rows.forEach(row => {
+                const isMini = row.classList.contains('mini-details-row');
+                if (filter === 'all') {
+                    // Show all rows; mini rows respect their own hidden class
+                    row.style.display = isMini && row.classList.contains('hidden') ? 'none' : '';
+                } else {
+                    if (isMini) {
+                        // Mini row visibility depends on its parent row and hidden state
+                        const parent = row.previousElementSibling;
+                        const pStatus = parent ? parent.getAttribute('data-status') : null;
+                        const pClass = pStatus ? getStatusClass(pStatus) : '';
+                        const parentMatches = (filter === pClass) || (filter === 'error-critical' && pStatus === 'Erreur!');
+                        row.style.display = parentMatches && !row.classList.contains('hidden') ? '' : 'none';
+                    } else {
+                        const status = row.getAttribute('data-status');
+                        const statusClass = getStatusClass(status);
+                        if (filter === statusClass || (filter === 'error-critical' && status === 'Erreur!')) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        }
+        
+        function getStatusClass(status) {
+            if (status === 'Succès') return 'success';
+            if (status === 'Warning') return 'warning';
+            if (status === 'Erreur!') return 'error-critical';
+            if (status === 'Erreur') return 'error';
+            return '';
+        }
+        // Status class for history successPercent using same rules as day J
+        function getHistoryStatusClass(percent) {
+            if (!isFinite(percent)) return 'history-na';
+            if (percent === 0) return 'history-error'; // Erreur!
+            if (percent >= 95) return 'history-success';
+            if (percent >= 90) return 'history-warning';
+            return 'history-error';
+        }
+        
+        function toggleMini(el) {
+            const row = el.closest('tr');
+            const details = row.nextElementSibling;
+            if (details && details.classList.contains('mini-details-row')) {
+                // Toggle logical hidden class
+                details.classList.toggle('hidden');
+                // Ensure inline display matches the new state (overrides previous filter inline style)
+                if (details.classList.contains('hidden')) {
+                    details.style.display = 'none';
+                } else {
+                    details.style.display = '';
+                }
+                // Render history on first open
+                const historySpan = details.querySelector('.history-line');
+                if (historySpan && !historySpan.dataset.rendered) {
+                    try {
+                        const histStr = row.getAttribute('data-history') || '[]';
+                        const hist = JSON.parse(histStr);
+                        const pieces = (Array.isArray(hist) ? hist : []).map((v, idx) => {
+                            if (v === null || v === undefined || Number.isNaN(v)) {
+                                return '<span class="history-day history-na" title="Jour ' + idx + ': N/A">—</span>';
+                            }
+                            const n = Math.round(Number(v));
+                            const cls = getHistoryStatusClass(n);
+                            return '<span class="history-day ' + cls + '" title="Jour ' + idx + ': ' + n + '%">' + n + '%</span>';
+                        });
+                        historySpan.innerHTML = pieces.join('');
+                    } catch (e) {
+                        historySpan.textContent = '—';
+                    }
+                    historySpan.dataset.rendered = '1';
+                }
+            }
+        }
+        
+    </script>
+</body>
+</html>
