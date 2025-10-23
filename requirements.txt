@@ -1,0 +1,7 @@
+click
+python-dotenv
+dependency-injector
+PyMySQL
+google-cloud-storage
+requests
+beautifulsoup4

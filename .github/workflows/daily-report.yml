@@ -1,0 +1,68 @@
+name: 📊 Daily SpiderVision Report
+
+on:
+  # Exécution quotidienne à 07:30 UTC (09:30 heure de Paris en été)
+  schedule:
+    - cron: "30 7 * * *"
+  
+  # Permet l'exécution manuelle depuis GitHub
+  workflow_dispatch:
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 📊 Generate SpiderVision Report
+        env:
+          SPIDER_VISION_API_BASE: ${{ secrets.SPIDER_VISION_API_BASE }}
+          SPIDER_VISION_EMAIL: ${{ secrets.SPIDER_VISION_EMAIL }}
+          SPIDER_VISION_PASSWORD: ${{ secrets.SPIDER_VISION_PASSWORD }}
+          SPIDER_VISION_JWT_TOKEN: ${{ secrets.SPIDER_VISION_JWT_TOKEN }}
+          SPIDER_VISION_LOGIN_ENDPOINT: ${{ secrets.SPIDER_VISION_LOGIN_ENDPOINT }}
+          SPIDER_VISION_OVERVIEW_ENDPOINT: ${{ secrets.SPIDER_VISION_OVERVIEW_ENDPOINT }}
+        run: |
+          echo "🔄 Génération du rapport en cours..."
+          python generate_new_report.py
+          echo "✅ Rapport généré avec succès !"
+
+      - name: 📤 Upload report as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: spidervision-report-${{ github.run_number }}
+          path: |
+            reports/last_day_history_live_report_*.html
+            reports/spider_vision_overview_current.csv
+            index.html
+          retention-days: 30
+
+      - name: 📝 Create summary
+        run: |
+          echo "## 📊 Rapport SpiderVision généré" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Le rapport a été généré avec succès !" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📅 Date: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 Téléchargez le rapport depuis l'onglet 'Artifacts' ci-dessus." >> $GITHUB_STEP_SUMMARY
+          
+          # Lister les fichiers générés
+          if [ -d "reports" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Fichiers générés:" >> $GITHUB_STEP_SUMMARY
+            ls -lh reports/*.html | tail -5 | awk '{print "- " $9 " (" $5 ")"}' >> $GITHUB_STEP_SUMMARY
+          fi
