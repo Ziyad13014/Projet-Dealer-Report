@@ -15,7 +15,7 @@ class SpiderVisionData:
     """Gestionnaire de récupération des données depuis l'API SpiderVision."""
     
     def __init__(self):
-        self.api_base = os.getenv('SPIDER_VISION_API_BASE', 'https://food-api-spider-vision.data-solutions.com')
+        self.api_base = os.getenv('SPIDER_VISION_API_BASE', 'https://spider-vision.data-solutions.com/')
         self.overview_endpoint = os.getenv('SPIDER_VISION_OVERVIEW_ENDPOINT', '/store-history/overview')
         
     def get_overview(self, token: str) -> Dict[str, Any]:

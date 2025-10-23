@@ -1,31 +1,36 @@
-# SpiderVision Report Generator - PowerShell
-# Double-clic pour lancer
+# Git Push GitHub Actions - PowerShell
+# Script pour pousser les fichiers d'automatisation sur GitHub
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "   SPIDERVISION REPORT GENERATOR" -ForegroundColor Green
+Write-Host "   GIT COMMIT ET PUSH" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Changer vers le répertoire du script
 Set-Location $PSScriptRoot
 
-Write-Host "Activation environnement Python..." -ForegroundColor Yellow
-& .venv\Scripts\Activate.ps1
+Write-Host "Ajout des fichiers..." -ForegroundColor Yellow
+git add .github/ requirements.txt GITHUB_ACTIONS_SETUP.md
 
 Write-Host ""
-Write-Host "Génération du rapport en cours..." -ForegroundColor Yellow
-Write-Host ""
+Write-Host "Commit..." -ForegroundColor Yellow
+git commit -m "Add GitHub Actions automation"
 
-# Lancer le script avec sortie non-bufferisée
-python -u .\lance_un_rapport.py
+Write-Host ""
+Write-Host "Push vers GitHub..." -ForegroundColor Yellow
+git push
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Rapport généré avec succès !" -ForegroundColor Green
+Write-Host "TERMINE !" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Le fichier HTML a été créé dans le dossier reports/" -ForegroundColor White
-Write-Host "Ouvrez-le dans votre navigateur pour voir le rapport." -ForegroundColor White
+Write-Host "Les fichiers ont ete pousses sur GitHub." -ForegroundColor White
+Write-Host ""
+Write-Host "Prochaines etapes:" -ForegroundColor Yellow
+Write-Host "1. Allez sur GitHub - Settings - Secrets" -ForegroundColor White
+Write-Host "2. Ajoutez les secrets (voir GITHUB_ACTIONS_SETUP.md)" -ForegroundColor White
+Write-Host "3. Testez le workflow dans Actions" -ForegroundColor White
 Write-Host ""
 
-Read-Host "Appuyez sur Entrée pour fermer"
+Read-Host "Appuyez sur Entree pour fermer"
