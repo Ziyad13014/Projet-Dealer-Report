@@ -27,12 +27,23 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: 🔑 Generate new JWT token
+        env:
+          SPIDER_VISION_API_BASE: ${{ secrets.SPIDER_VISION_API_BASE }}
+          SPIDER_VISION_EMAIL: ${{ secrets.SPIDER_VISION_EMAIL }}
+          SPIDER_VISION_PASSWORD: ${{ secrets.SPIDER_VISION_PASSWORD }}
+          SPIDER_VISION_LOGIN_ENDPOINT: ${{ secrets.SPIDER_VISION_LOGIN_ENDPOINT }}
+          SPIDER_VISION_OVERVIEW_ENDPOINT: ${{ secrets.SPIDER_VISION_OVERVIEW_ENDPOINT }}
+        run: |
+          echo "🔑 Génération d'un nouveau token JWT..."
+          python scripts/generer_nouveau_token.py
+          echo "✅ Token généré et .env mis à jour !"
+
       - name: 📊 Generate SpiderVision Report
         env:
           SPIDER_VISION_API_BASE: ${{ secrets.SPIDER_VISION_API_BASE }}
           SPIDER_VISION_EMAIL: ${{ secrets.SPIDER_VISION_EMAIL }}
           SPIDER_VISION_PASSWORD: ${{ secrets.SPIDER_VISION_PASSWORD }}
-          SPIDER_VISION_JWT_TOKEN: ${{ secrets.SPIDER_VISION_JWT_TOKEN }}
           SPIDER_VISION_LOGIN_ENDPOINT: ${{ secrets.SPIDER_VISION_LOGIN_ENDPOINT }}
           SPIDER_VISION_OVERVIEW_ENDPOINT: ${{ secrets.SPIDER_VISION_OVERVIEW_ENDPOINT }}
         run: |
