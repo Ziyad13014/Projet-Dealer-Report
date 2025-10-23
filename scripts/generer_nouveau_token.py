@@ -1,10 +1,125 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Script de création des fichiers d'automatisation GitHub Actions
+Script pour générer un nouveau token JWT valide depuis l'API SpiderVision
 """
 
+import sys
 import os
 from pathlib import Path
+
+# Forcer l'encodage UTF-8 pour Windows
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+# Ajouter le dossier parent au path pour importer depuis src
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+def update_env_token(new_token):
+    """Met à jour le token JWT dans le fichier .env"""
+    env_path = Path(__file__).parent.parent / '.env'
+    
+    try:
+        # Lire le fichier .env actuel
+        if env_path.exists():
+            with open(env_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+        else:
+            lines = []
+        
+        # Chercher et remplacer la ligne SPIDER_VISION_JWT_TOKEN
+        token_found = False
+        for i, line in enumerate(lines):
+            if line.startswith('SPIDER_VISION_JWT_TOKEN='):
+                lines[i] = f'SPIDER_VISION_JWT_TOKEN={new_token}\n'
+                token_found = True
+                break
+        
+        # Si la ligne n'existe pas, l'ajouter à la fin
+        if not token_found:
+            # Ajouter une ligne vide si le fichier ne se termine pas par \n
+            if lines and not lines[-1].endswith('\n'):
+                lines[-1] += '\n'
+            lines.append(f'SPIDER_VISION_JWT_TOKEN={new_token}\n')
+        
+        # Réécrire le fichier .env
+        with open(env_path, 'w', encoding='utf-8') as f:
+            f.writelines(lines)
+        
+        return True
+    except Exception as e:
+        print(f"⚠️ Erreur lors de la mise à jour du .env: {e}")
+        return False
+
+def generate_new_jwt_token():
+    """Génère un nouveau token JWT en se connectant à l'API SpiderVision"""
+    print("🔑 Génération d'un nouveau token JWT...")
+    print("=" * 80)
+    
+    try:
+        # Importer depuis le module src
+        from src.cli.services.auth import SpiderVisionAuth
+        from dotenv import load_dotenv
+        import os
+        
+        # Charger et afficher les variables (masquées)
+        load_dotenv()
+        email = os.getenv('SPIDER_VISION_EMAIL')
+        password = os.getenv('SPIDER_VISION_PASSWORD')
+        api_base = os.getenv('SPIDER_VISION_API_BASE')
+        
+        print(f"📧 Email utilisé: {email[:3]}***{email[-10:] if email else 'NON DÉFINI'}")
+        print(f"🔐 Password: {'*' * (len(password) if password else 0)} ({len(password) if password else 0} caractères)")
+        print(f"🌐 API Base: {api_base}")
+        print("=" * 80)
+        
+        print("🔄 Connexion à l'API SpiderVision...")
+        
+        auth = SpiderVisionAuth()
+        token = auth.login()
+        
+        print("✅ Authentification réussie !")
+        print("=" * 80)
+        print("\n🎉 NOUVEAU TOKEN JWT GÉNÉRÉ :\n")
+        print("=" * 80)
+        print(token[:50] + "..." + token[-20:])  # Afficher partiellement pour sécurité
+        print("=" * 80)
+        
+        # Mise à jour automatique du fichier .env
+        print("\n🔄 Mise à jour automatique du fichier .env...")
+        if update_env_token(token):
+            print("✅ Fichier .env mis à jour avec succès !")
+            print("\n📋 PROCHAINES ÉTAPES :")
+            print("1. Le token a été automatiquement enregistré dans .env")
+            print("2. Vous pouvez maintenant générer un rapport :")
+            print("   → python src\\generate_new_report.py")
+            print("\n✅ Le nouveau token sera valide pendant environ 2 heures.")
+        else:
+            print("❌ Échec de la mise à jour automatique du .env")
+            print("\n📋 MISE À JOUR MANUELLE REQUISE :")
+            print("1. Ouvrez le fichier .env")
+            print("2. Remplacez la valeur de SPIDER_VISION_JWT_TOKEN par :")
+            print(f"   {token}")
+            print("3. Sauvegardez le fichier .env")
+        
+        print("=" * 80)
+        
+        return token
+        
+    except Exception as e:
+        print(f"\n❌ ERREUR lors de la génération du token :")
+        print(f"   {str(e)}")
+        print("\n💡 Vérifiez que :")
+        print("   - Le fichier .env contient SPIDER_VISION_EMAIL et SPIDER_VISION_PASSWORD")
+        print("   - Les identifiants sont corrects")
+        print("   - Vous avez une connexion internet")
+        print("\n🔍 DEBUG - Valeurs actuelles dans .env :")
+        print(f"   Email: {email if email else '❌ NON DÉFINI'}")
+        print(f"   Password: {'✅ Défini' if password else '❌ NON DÉFINI'}")
+        print(f"   API Base: {api_base if api_base else '❌ NON DÉFINI'}")
+        return None
 
 def create_automation_files():
     """Crée tous les fichiers nécessaires pour l'automatisation"""
@@ -161,4 +276,5 @@ Votre rapport sera généré automatiquement tous les jours à 09:30 (heure de P
     print("\nConsultez le fichier GITHUB_ACTIONS_SETUP.md pour les instructions.")
 
 if __name__ == "__main__":
-    create_automation_files()
+    # Par défaut, générer un nouveau token JWT
+    generate_new_jwt_token()

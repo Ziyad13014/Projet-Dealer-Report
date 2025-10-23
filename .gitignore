@@ -55,3 +55,6 @@ scratch*/
 
 # Cache
 .cache/
+
+# Archive (old files not needed in git)
+archive/

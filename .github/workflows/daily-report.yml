@@ -37,7 +37,7 @@ jobs:
           SPIDER_VISION_OVERVIEW_ENDPOINT: ${{ secrets.SPIDER_VISION_OVERVIEW_ENDPOINT }}
         run: |
           echo "🔄 Génération du rapport en cours..."
-          python generate_new_report.py
+          python src/generate_new_report.py
           echo "✅ Rapport généré avec succès !"
 
       - name: 📤 Upload report as artifact

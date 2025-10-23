@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+import sys
 import csv
 import ast
 import json
@@ -5,9 +7,14 @@ import base64
 import os
 from datetime import datetime
 from dotenv import load_dotenv
+from cli.repository.WebDataRepository import WebDataRepository
 import requests
-from bs4 import BeautifulSoup
-import re
+
+# Forcer l'encodage UTF-8 pour Windows
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 def get_logo_base64():
     """Convertit le logo en base64 pour l'intégrer dans le HTML"""
@@ -138,73 +145,30 @@ def get_token():
         print(f"Erreur d'authentification: {e}")
         return None
 
-def get_live_data_from_scraping():
-    """Scrape la page HTML de SpiderVision pour récupérer TOUTES les données incluant l'historique"""
+def get_live_data_from_api():
+    """Récupère les données en temps réel depuis SpiderVision API avec historique"""
     try:
-        print("🔄 Connexion à SpiderVision (scraping HTML)...")
+        print("🔄 Connexion à l'API SpiderVision...")
+        
+        # Utiliser les services existants
+        from cli.services.auth import SpiderVisionAuth
+        from cli.services.data import SpiderVisionData
         
         # Authentification
-        from cli.services.auth import SpiderVisionAuth
-        load_dotenv()
-        
         auth = SpiderVisionAuth()
         token = auth.login()
         print("✅ Authentifié avec succès")
         
-        # URL de la page HTML (page d'accueil avec le tableau)
-        page_url = 'https://spider-vision.data-solutions.com'
+        # Récupération des données overview avec historique
+        data_service = SpiderVisionData()
+        overview_data = data_service.get_overview(token)
+        print(f"✅ {len(overview_data) if isinstance(overview_data, list) else 'Données'} récupérées depuis l'API")
         
-        headers = {
-            'Authorization': f'Bearer {token}',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
-        
-        print(f"🌐 Scraping de {page_url}...")
-        response = requests.get(page_url, headers=headers, timeout=30)
-        response.raise_for_status()
-        
-        # Parser le HTML
-        soup = BeautifulSoup(response.text, 'html.parser')
-        table = soup.find('table')
-        
-        if not table:
-            print("❌ Tableau non trouvé dans la page HTML")
-            return None
-        
-        # Trouver les en-têtes
-        headers_row = table.find('thead').find('tr') if table.find('thead') else table.find('tr')
-        headers_list = [th.get_text().strip() for th in headers_row.find_all(['th', 'td'])]
-        
-        print(f"📋 Colonnes trouvées: {headers_list}")
-        
-        # Parser les données
-        retailers_data = []
-        rows = table.find('tbody').find_all('tr') if table.find('tbody') else table.find_all('tr')[1:]
-        
-        for row in rows:
-            cells = row.find_all(['td', 'th'])
-            if len(cells) < 3:
-                continue
-            
-            # Extraire les données de chaque cellule
-            retailer_data = {}
-            for i, cell in enumerate(cells):
-                if i < len(headers_list):
-                    retailer_data[headers_list[i]] = cell.get_text().strip()
-            
-            retailers_data.append(retailer_data)
-        
-        print(f"✅ {len(retailers_data)} enseignes récupérées depuis le scraping HTML")
-        
-        # Debug: afficher les premières données pour voir la structure
-        if retailers_data:
-            print(f"\n📋 Exemple de données récupérées (première enseigne):")
-            print(json.dumps(retailers_data[0], indent=2, ensure_ascii=False))
-        
-        return retailers_data
+        return overview_data
         
     except Exception as e:
-        print(f"❌ Erreur lors du scraping HTML: {e}")
+        print(f"❌ Erreur lors de la récupération des données API: {e}")
+        print("⚠️ Tentative de lecture du CSV local en fallback...")
         import traceback
         traceback.print_exc()
         return None
@@ -216,8 +180,8 @@ def generate_new_report():
     retailers_data = []
     data_source = "API"  # Tracker la source des données
     
-    # Utiliser le scraping HTML pour récupérer TOUTES les données
-    api_data = get_live_data_from_scraping()
+    # Utiliser UNIQUEMENT l'API (pas de fallback CSV)
+    api_data = get_live_data_from_api()
     
     if not api_data:
         print("❌ Impossible de générer le rapport : l'API SpiderVision n'est pas disponible")
@@ -910,6 +874,35 @@ def generate_new_report():
         f.write(html_content)
     
     print(f"✅ Nouveau rapport généré: {filename}")
+    
+    # Supprimer le rapport le plus ancien (garder seulement les 10 plus récents)
+    try:
+        import glob
+        reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports')
+        reports_pattern = os.path.join(reports_dir, 'last_day_history_live_report_*.html')
+        all_reports = glob.glob(reports_pattern)
+        
+        # Exclure le fichier symlink permanent
+        permanent_link = os.path.join(reports_dir, 'last_day_history_live_report.html')
+        all_reports = [r for r in all_reports if os.path.abspath(r) != os.path.abspath(permanent_link)]
+        
+        # Trier par date de modification (du plus ancien au plus récent)
+        all_reports.sort(key=os.path.getmtime)
+        
+        # Garder seulement les 10 plus récents
+        max_reports = 10
+        if len(all_reports) > max_reports:
+            reports_to_delete = all_reports[:-max_reports]
+            for old_report in reports_to_delete:
+                try:
+                    os.remove(old_report)
+                    print(f"🗑️ Rapport ancien supprimé: {os.path.basename(old_report)}")
+                except Exception as e:
+                    print(f"⚠️ Impossible de supprimer {os.path.basename(old_report)}: {e}")
+            
+            print(f"✅ Nettoyage terminé: {len(reports_to_delete)} ancien(s) rapport(s) supprimé(s)")
+    except Exception as e:
+        print(f"⚠️ Erreur lors du nettoyage des anciens rapports: {e}")
     
     # Mettre à jour automatiquement index.html avec le lien du nouveau rapport
     try:

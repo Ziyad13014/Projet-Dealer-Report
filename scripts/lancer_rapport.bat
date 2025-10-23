@@ -4,7 +4,7 @@ REM Script d'automatisation quotidienne
 REM Génère le rapport SpiderVision automatiquement
 REM ========================================
 
-cd /d "%~dp0"
+cd /d "%~dp0\.."
 
 REM Créer le dossier logs s'il n'existe pas
 if not exist "logs" mkdir logs
@@ -31,9 +31,19 @@ if %ERRORLEVEL% NEQ 0 (
 echo [INFO] Environnement active avec succes >> "%LOGFILE%" 2>&1
 echo. >> "%LOGFILE%" 2>&1
 
-REM Générer le rapport
+REM Etape 1: Generer un nouveau token JWT
+echo [INFO] Generation d'un nouveau token JWT... >> "%LOGFILE%" 2>&1
+python scripts\generer_nouveau_token.py >> "%LOGFILE%" 2>&1
+
+if %ERRORLEVEL% NEQ 0 (
+    echo [AVERTISSEMENT] Echec generation token, utilisation du token existant >> "%LOGFILE%" 2>&1
+)
+
+echo. >> "%LOGFILE%" 2>&1
+
+REM Etape 2: Generer le rapport
 echo [INFO] Generation du rapport en cours... >> "%LOGFILE%" 2>&1
-python generate_new_report.py >> "%LOGFILE%" 2>&1
+python src\generate_new_report.py >> "%LOGFILE%" 2>&1
 
 if %ERRORLEVEL% EQU 0 (
     echo. >> "%LOGFILE%" 2>&1

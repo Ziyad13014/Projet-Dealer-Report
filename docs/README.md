@@ -1,77 +1,14 @@
-# 📊 SpiderVision Dealer Report
+# Dealer Report
 
-Système automatisé de génération de rapports quotidiens pour le suivi des dealers SpiderVision.
-
-## 🚀 Démarrage rapide
-
-### **Génération manuelle d'un rapport**
-
-#### **Option 1 : Script automatique complet (recommandé)**
-```bash
-# Windows - Génère un nouveau token ET le rapport automatiquement
-scripts\lancer_rapport.bat
-```
-
-Ce script fait automatiquement :
-1. ✅ Génère un nouveau token JWT
-2. ✅ Met à jour le fichier `.env`
-3. ✅ Génère le rapport HTML
-4. ✅ Enregistre les logs dans `logs/`
-
-#### **Option 2 : Génération manuelle en 2 étapes**
-```bash
-# Étape 1 : Générer un nouveau token (met à jour .env automatiquement)
-python scripts\generer_nouveau_token.py
-
-# Étape 2 : Générer le rapport
-python src\generate_new_report.py
-```
-
-**Note** : Le système conserve automatiquement les **10 rapports les plus récents** et supprime les plus anciens.
-
-### **Automatisation quotidienne**
-Le rapport est généré automatiquement tous les jours à 09:30 via GitHub Actions.
-Consultez `docs/GITHUB_ACTIONS_SETUP.md` pour la configuration.
-
-## 📁 Structure du projet
-
-```
-Projet-Dealer-Report/
-├── 📁 src/                          # Code source principal
-│   ├── generate_new_report.py       # ✅ Script principal de génération
-│   ├── update_index_link.py         # Mise à jour automatique de index.html
-│   └── cli/                         # Module CLI (services, repository, etc.)
-│
-├── 📁 scripts/                      # Scripts d'automatisation
-│   ├── lancer_rapport.bat           # Script Windows avec logs
-│   ├── lancer_rapport_powershell.ps1
-│   ├── lance_un_rapport.py          # Script de création des fichiers
-│   └── setup_env.bat                # Configuration environnement
-│
-├── 📁 docs/                         # Documentation
-│   ├── README_LANCEMENT.md          # Guide de lancement
-│   └── GITHUB_ACTIONS_SETUP.md      # Configuration GitHub Actions
-│
-├── 📁 reports/                      # Rapports générés (HTML/CSV)
-├── 📁 logs/                         # Logs d'exécution
-├── 📁 db/                           # Schémas base de données
-├── 📁 .github/workflows/            # GitHub Actions (automatisation)
-│
-├── .env                             # Configuration (non versionné)
-├── .gitignore
-├── requirements.txt                 # Dépendances Python
-├── pyproject.toml                   # Configuration projet
-├── index.html                       # Page d'accueil des rapports
-└── README.md                        # Ce fichier
-```
+Daily dealer anomaly report CLI that generates reports from MySQL data, uploads to Google Cloud Storage, and posts notifications to Microsoft Teams.
 
 ## Architecture
 
 ```
-SpiderVision API → Report Generation → HTML/CSV → GitHub Actions
+MySQL Database → Report Generation → GCS Upload → Teams Notification
      ↓                    ↓              ↓            ↓
-Authentication      Live Data      Reports      Daily Schedule
-JWT Token           36 Retailers   Visual       09:30 Paris
+Retailer Rules      CSV + HTML      Fixed URL    Webhook Message
+Crawler Runs        Reports         Latest       with Report Link
 ```
 
 ## Explications rapides (FR)
