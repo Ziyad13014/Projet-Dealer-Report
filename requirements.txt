@@ -5,3 +5,5 @@ PyMySQL
 google-cloud-storage
 requests
 beautifulsoup4
+selenium
+webdriver-manager
