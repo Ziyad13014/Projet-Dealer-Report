@@ -43,9 +43,8 @@ Projet-Dealer-Report/
 │   └── cli/                         # Module CLI (services, repository, etc.)
 │
 ├── 📁 scripts/                      # Scripts d'automatisation
-│   ├── lancer_rapport.bat           # Script Windows avec logs
-│   ├── lancer_rapport_powershell.ps1
-│   ├── lance_un_rapport.py          # Script de création des fichiers
+│   ├── lancer_rapport.bat           # Script Windows tout-en-un
+│   ├── generer_nouveau_token.py     # Génération token JWT
 │   └── setup_env.bat                # Configuration environnement
 │
 ├── 📁 docs/                         # Documentation

@@ -44,7 +44,6 @@ Projet-Dealer-Report/
 ├── 📁 scripts/                    # Scripts utilitaires
 │   ├── lancer_rapport.bat         # Script Windows tout-en-un
 │   ├── generer_nouveau_token.py   # Génération token JWT
-│   ├── decode_jwt.py              # Décodage token JWT
 │   └── setup_env.bat              # Configuration environnement
 │
 ├── 📁 reports/                    # Rapports générés
@@ -856,11 +855,27 @@ if sys.platform == 'win32':
 Pour toute question ou problème :
 1. Consultez cette documentation
 2. Vérifiez les logs dans `logs/`
-3. Testez avec `decode_jwt.py` pour vérifier le token
+3. Générez un nouveau token avec `generer_nouveau_token.py`
 4. Consultez les issues GitHub
 
 ---
 
-**Documentation mise à jour le : 23 octobre 2025**
-**Version du projet : 2.0**
+## 📝 Changelog
+
+### **Version 2.1 - 28 octobre 2025**
+- ✅ Correction de l'authentification API
+- ✅ Nettoyage des scripts de debug obsolètes
+- ✅ Amélioration de la génération automatique de tokens
+- ✅ Mise à jour de la documentation
+
+### **Version 2.0 - 23 octobre 2025**
+- ✅ Réorganisation complète du projet
+- ✅ Système automatisé de génération de tokens JWT
+- ✅ Nettoyage automatique des anciens rapports (garde 10)
+- ✅ Documentation exhaustive
+
+---
+
+**Documentation mise à jour le : 28 octobre 2025**
+**Version du projet : 2.1**
 **Auteur : Ziyad13014**
