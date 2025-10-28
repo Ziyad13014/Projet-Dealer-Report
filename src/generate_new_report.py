@@ -879,11 +879,11 @@ def generate_new_report():
     try:
         import glob
         reports_dir = os.path.join(os.path.dirname(__file__), '..', 'reports')
-        reports_pattern = os.path.join(reports_dir, 'last_day_history_live_report_*.html')
+        reports_pattern = os.path.join(reports_dir, 'rapport_*.html')
         all_reports = glob.glob(reports_pattern)
         
         # Exclure le fichier symlink permanent
-        permanent_link = os.path.join(reports_dir, 'last_day_history_live_report.html')
+        permanent_link = os.path.join(reports_dir, 'rapport.html')
         all_reports = [r for r in all_reports if os.path.abspath(r) != os.path.abspath(permanent_link)]
         
         # Trier par date de modification (du plus ancien au plus récent)
